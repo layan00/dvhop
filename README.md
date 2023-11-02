@@ -3,11 +3,11 @@ dvhop
 
 DV-hop positioning algorithm for NS3.20
 
-###Installing
+### Installing
 Just download ns-allinone-3.20 and then:
 ```
 $ cd $NS_HOME/src/
-$ git clone https://github.com/pixki/dvhop.git
+$ git clone https://github.com/layan00/dvhop
 $ cd $NS_HOME
 $ ./waf configure --enable-examples
 $ ./waf --run dvhop-example
