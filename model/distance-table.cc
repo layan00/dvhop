@@ -58,7 +58,6 @@ namespace ns3
         }
     }
 
-
     Time
     DistanceTable::LastUpdatedAt (Ipv4Address beacon) const
     {

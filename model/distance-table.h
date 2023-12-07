@@ -94,12 +94,11 @@ namespace ns3
        * @param yPos Y coordinate
        */
       void AddBeacon(Ipv4Address beacon, uint16_t hops, double xPos, double yPos);
+      // stores neighboring nodes 
+      std::map<Ipv4Address, ns3::dvhop::BeaconInfo> Inner() {return m_table;};// added by layan
     private:
       std::map<Ipv4Address, BeaconInfo>  m_table;
     };
-
-
-
 
 
   }

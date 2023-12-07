@@ -54,7 +54,7 @@ namespace ns3 {
       double GetXPosition()               { return m_xPosition;}
       double GetYPosition()               { return m_yPosition;}
       bool  IsBeacon()                   { return m_isBeacon;}
-
+      DistanceTable GetDistanceTable(){ return m_disTable; }; // added by layan
       void  PrintDistances(Ptr<OutputStreamWrapper> stream, Ptr<Node> node) const;
 
     private:
