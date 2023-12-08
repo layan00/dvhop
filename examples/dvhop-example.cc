@@ -70,7 +70,7 @@ point trilateration(const point& p1, const point& p2, const point& p3, double d1
     
     return result;
 }
- 
+
 class DVHopExample
 {
 public:
@@ -117,6 +117,8 @@ private:
   std::vector<float> hopSizes;
 
   int nodesToKill;
+
+  void nodeShutdown(int i);
 
   int seed = 25565;
 
@@ -489,3 +491,11 @@ DVHopExample::InstallInternetStack ()
    */
 }
 
+void DVHopExample::nodeShutdown(uint32_t i){
+    std::pair<Ptr<Ipv4>, uint32_t> returnValue = interfaces.Get(i);
+    Ptr<Ipv4> ipv4 = returnValue.first;
+    uint32_t index = returnValue.second;
+    Ptr<Ipv4Interface> iface = ipv4->GetObject<Ipv4L3Protocol> ()->GetInterface(index);
+    NS_LOG_UNCOND (Simulator::Now().GetSeconds() << "s Set" << iface->GetAddress(0).GetLocal() << " down.");
+    ipv4->SetDown(index);
+}
