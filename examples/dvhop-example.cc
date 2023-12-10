@@ -12,6 +12,7 @@
 #include <cmath>
 #include <math.h>
 #include <vector>
+#include <unistd.h>
 using namespace ns3;
 
 /**
@@ -116,9 +117,10 @@ private:
   std::vector<int> beaconCoords;
   std::vector<float> hopSizes;
 
-  int nodesToKill;
+  uint32_t remainingNodes;
 
   void NodeShutdown(uint32_t i);
+  void RecycleNodes();
 
   int seed = 25565;
 
@@ -224,11 +226,11 @@ void
 DVHopExample::Run ()
 {
   //Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", UintegerValue (1)); // enable rts cts all the time.
+  remainingNodes = size;
   CreateNodes ();
   CreateDevices ();
   InstallInternetStack ();
   CreateBeacons();
-
 
   std::cout << "Starting simulation for " << totalTime << " s ...\n";
 
@@ -245,7 +247,14 @@ DVHopExample::Run ()
     ++nodeitr;
   }
 
-  Simulator::Run ();
+  Simulator::Run();
+
+  //RecycleNodes();
+
+  // --Uncomment the three lines below for critical conditions--
+  //Simulator::Stop(Seconds(totalTime));
+  //NodeShutdown(5);
+  //Simulator::Run();
 
   CalculateHopSize();
 
@@ -499,3 +508,21 @@ void DVHopExample::NodeShutdown(uint32_t i){
     NS_LOG_UNCOND (Simulator::Now().GetSeconds() << "s Set" << iface->GetAddress(0).GetLocal() << " down.");
     ipv4->SetDown(index);
 }
+
+void DVHopExample::RecycleNodes(){
+    NodeContainer newNodes = NodeContainer();
+    //srand(getSeed());
+    //uint32_t randomNode = 4;
+    
+    for(uint32_t i = 0; i < remainingNodes; i++){
+        if(i != 4){
+            newNodes.Add(nodes.Get(i));
+        }
+    }
+    nodes = newNodes;
+    remainingNodes = remainingNodes - 1;
+    NodeShutdown(4);
+}
+
+
+
