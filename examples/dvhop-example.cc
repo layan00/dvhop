@@ -117,11 +117,6 @@ private:
   std::vector<int> beaconCoords;
   std::vector<float> hopSizes;
 
-  uint32_t remainingNodes;
-
-  void NodeShutdown(uint32_t i);
-  void RecycleNodes();
-
   int seed = 25565;
 
   ///\name network
@@ -130,8 +125,8 @@ private:
   NetDeviceContainer devices;
   Ipv4InterfaceContainer interfaces;
   //\}
-
-
+  
+  std::vector<int> deadNodes;
 
 private:
   void CreateNodes ();
@@ -141,6 +136,7 @@ private:
   void CreateBeacons();
   void CalculateHopSize();
   void CalculateCoordinates();
+  void NodeShutdown();
 
 };
 
@@ -188,7 +184,8 @@ int main (int argc, char **argv)
 DVHopExample::DVHopExample () :
   size (10),
   step (100),
-  totalTime (10),
+  totalTime (33), //Uncomment this for normal conditions
+  //totalTime (3), //Uncomment this for critical conditions
   pcap (true),
   printRoutes (true),
   randomSeed (false),
@@ -226,13 +223,13 @@ void
 DVHopExample::Run ()
 {
   //Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", UintegerValue (1)); // enable rts cts all the time.
-  remainingNodes = size;
   CreateNodes ();
   CreateDevices ();
   InstallInternetStack ();
   CreateBeacons();
 
-  std::cout << "Starting simulation for " << totalTime << " s ...\n";
+  std::cout << "Starting simulation for " << totalTime  << " s ...\n"; //Normal Conditions Printout
+  //std::cout << "Starting simulation for " << (totalTime * (size + 1)) << " s ...\n"; //Critical Conditions Printout
 
   Simulator::Stop (Seconds (totalTime));
 
@@ -249,13 +246,13 @@ DVHopExample::Run ()
 
   Simulator::Run();
 
-  //RecycleNodes();
-
-  // --Uncomment the three lines below for critical conditions--
-  //Simulator::Stop(Seconds(totalTime));
-  //NodeShutdown(5);
-  //Simulator::Run();
-
+  // --Uncomment the for-loop below for critical conditions--
+  /*for (uint32_t i = 0; i < size; ++i){ 
+    Simulator::Stop(Seconds(totalTime));
+    NodeShutdown();
+    Simulator::Run();
+  }*/
+  
   CalculateHopSize();
 
   Simulator::Destroy ();
@@ -500,29 +497,21 @@ DVHopExample::InstallInternetStack ()
    */
 }
 
-void DVHopExample::NodeShutdown(uint32_t i){
-    std::pair<Ptr<Ipv4>, uint32_t> returnValue = interfaces.Get(i);
-    Ptr<Ipv4> ipv4 = returnValue.first;
-    uint32_t index = returnValue.second;
-    Ptr<Ipv4Interface> iface = ipv4->GetObject<Ipv4L3Protocol> ()->GetInterface(index);
-    NS_LOG_UNCOND (Simulator::Now().GetSeconds() << "s Set" << iface->GetAddress(0).GetLocal() << " down.");
-    ipv4->SetDown(index);
-}
-
-void DVHopExample::RecycleNodes(){
-    NodeContainer newNodes = NodeContainer();
-    //srand(getSeed());
-    //uint32_t randomNode = 4;
+void DVHopExample::NodeShutdown(){
+    uint32_t randomNode = rand() % size;
+    auto iterator = std::find(deadNodes.begin(), deadNodes.end(), randomNode);
     
-    for(uint32_t i = 0; i < remainingNodes; i++){
-        if(i != 4){
-            newNodes.Add(nodes.Get(i));
-        }
+    if (iterator == deadNodes.end()){
+      std::pair<Ptr<Ipv4>, uint32_t> returnValue = interfaces.Get(randomNode);
+      Ptr<Ipv4> ipv4 = returnValue.first;
+      uint32_t index = returnValue.second;
+      Ptr<Ipv4Interface> interface = ipv4->GetObject<Ipv4L3Protocol> ()->GetInterface(index);
+      NS_LOG_UNCOND ("Node " << randomNode << " with IP address \"" << interface->GetAddress(0).GetLocal() << "\" killed at " << Simulator::Now().GetSeconds() << " seconds");
+      ipv4->SetDown(index);
+      deadNodes.push_back(randomNode);
     }
-    nodes = newNodes;
-    remainingNodes = remainingNodes - 1;
-    NodeShutdown(4);
+    
+    else {
+      NS_LOG_UNCOND ("No node killed this time. (Selected Node " << randomNode << ")");
+    }
 }
-
-
-
